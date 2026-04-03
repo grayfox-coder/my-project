@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard - Usage Tracking</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* basic clean styles matching the app */
+    :root {
+      /* ── DEEP GRAY THEME (DEFAULT) ── */
+      --bg: #B1B9C5;
+      --surface: #B1B9C5;
+      --light: #D4DCE5;
+      --dark: #8E98A5;
+      --shadow-l: #D4DCE5;
+      --shadow-d: #8E98A5;
+      --text: #2A323D;
+      --muted: #6A7480;
+      --accent: #000000;
+      --font: 'Inter', sans-serif;
+
+      --neu-raised: 8px 8px 16px var(--shadow-d), -8px -8px 16px var(--shadow-l);
+      --neu-inset: inset 6px 6px 12px var(--shadow-d), inset -6px -6px 12px var(--shadow-l);
+    }
+
+    body.theme-dark {
+      --bg: #1E2023;
+      --surface: #1E2023;
+      --light: #25282C;
+      --dark: #111112;
+      --shadow-l: #25282C;
+      --shadow-d: #141415;
+      --text: #E1E4E8;
+      --muted: #9BA3AF;
+    }
+
+    body.theme-white {
+      --bg: #F8F9FA;
+      --surface: #F8F9FA;
+      --light: #ffffff;
+      --dark: #D1D9E6;
+      --shadow-l: #ffffff;
+      --shadow-d: #D1D9E6;
+      --text: #2D3748;
+      --muted: #718096;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 60px 20px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .dashboard-card {
+      position: relative;
+      background: var(--surface);
+      border: none;
+      border-radius: 24px;
+      padding: 48px;
+      text-align: center;
+      box-shadow: 12px 12px 24px var(--shadow-d), -8px -8px 20px var(--shadow-l);
+      min-width: 380px;
+    }
+
+    /* theme switcher on admin */
+    .theme-selector {
+      display: flex;
+      gap: 8px;
+      margin-top: 20px;
+      justify-content: center;
+    }
+
+    .theme-opt {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: var(--neu-raised);
+    }
+
+    .theme-opt.active {
+      box-shadow: var(--neu-inset);
+      color: var(--accent);
+    }
+
+    h1 {
+      font-size: 26px;
+      margin-bottom: 12px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .stat-box {
+      background: var(--surface);
+      box-shadow: var(--neu-inset);
+      border-radius: 20px;
+      padding: 40px;
+      margin-top: 32px;
+    }
+
+    .stat-number {
+      font-size: 64px;
+      font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 8px;
+      text-shadow: 2px 2px 4px rgba(163, 177, 198, 0.3);
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 700;
+    }
+
+    .auth-warning {
+      color: #E05555;
+      font-size: 13px;
+      margin-top: 20px;
+      display: none;
+      font-weight: 500;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="dashboard-card">
+    <h1>Usage Tracking Dashboard</h1>
+    <p style="color: var(--muted); font-size: 14px;">Monitoring platform activity</p>
+
+    <div class="theme-selector">
+      <button class="theme-opt" id="theme-gray">Gray</button>
+      <button class="theme-opt" id="theme-dark">Dark</button>
+      <button class="theme-opt" id="theme-white">White</button>
+    </div>
+
+    <div class="stat-box">
+      <div class="stat-number" id="msgCount">...</div>
+      <div class="stat-label">Messages Sent Today</div>
+    </div>
+
+    <div class="auth-warning" id="authWarning">
+      Must be logged in to view metrics. Please log in via the main app.
+    </div>
+  </div>
+
+  <script>
+    // Supabase Configuration
+    const SUPABASE_URL = 'https://zraymacgsjokuzsteapr.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpyYXltYWNnc2pva3V6c3RlYXByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NjYwNzcsImV4cCI6MjA5MDE0MjA3N30.JlPShGc2C5yXj9eBRn4LfKOa6ZRDOl547ioCiSv6xRk';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // Theme logic
+    let currentTheme = localStorage.getItem('chat_theme') || 'gray';
+    function setTheme(theme) {
+      document.body.classList.remove('theme-dark', 'theme-white');
+      if (theme !== 'gray') document.body.classList.add(`theme-${theme}`);
+      currentTheme = theme;
+      localStorage.setItem('chat_theme', theme);
+
+      // Update UI
+      document.querySelectorAll('.theme-opt').forEach(opt => {
+        opt.classList.toggle('active', opt.id === `theme-${theme}`);
+      });
+    }
+    document.getElementById('theme-gray').addEventListener('click', () => setTheme('gray'));
+    document.getElementById('theme-dark').addEventListener('click', () => setTheme('dark'));
+    document.getElementById('theme-white').addEventListener('click', () => setTheme('white'));
+    setTheme(currentTheme);
+
+    async function loadStats() {
+      // Check session first, if RLS requires auth
+      const { data: { session } } = await supabaseClient.auth.getSession();
+
+      // Get start of today in ISO format
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      const isoStart = startOfToday.toISOString();
+
+      try {
+        const { count, error } = await supabaseClient
+          .from('messages')
+          .select('*', { count: 'exact', head: true })
+          .gte('created_at', isoStart);
+
+        if (error) {
+          console.error("Error fetching count:", error);
+          if (error.code === 'PGRST301') {
+            document.getElementById('authWarning').style.display = 'block';
+          }
+          document.getElementById('msgCount').textContent = "0";
+          return;
+        }
+
+        document.getElementById('msgCount').textContent = count || 0;
+        document.getElementById('authWarning').style.display = 'none';
+      } catch (err) {
+        console.error("Unexpected error:", err);
+        document.getElementById('msgCount').textContent = "Error";
+      }
+    }
+
+    loadStats();
+
+    // Real-time updates
+    supabaseClient
+      .channel('public:messages:admin')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+        loadStats(); // refresh count when a new message arrives
+      })
+      .subscribe();
+
+    // Re-check stats on auth change
+    supabaseClient.auth.onAuthStateChange(() => {
+      loadStats();
+    });
+  </script>
+</body>
+</html>
