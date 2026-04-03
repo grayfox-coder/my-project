@@ -1,0 +1,17 @@
+{
+  "name": "gray-chat",
+  "version": "1.0.0",
+  "description": "A real-time chat application with support for direct messages and group conversations, built with vanilla JavaScript and powered by Supabase.",
+  "main": "index.js",
+  "scripts": {
+    "build": "pretext",
+    "dev": "pretext --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "pretext": "^0.3.0"
+  }
+}

@@ -602,14 +602,13 @@ async function sendMessage() {
 
 // ─── Event listeners ─────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('loginBtn').addEventListener('click', handleLogin);
+  document.getElementById('authForm').addEventListener('submit', e => {
+    e.preventDefault();
+    handleLogin();
+  });
   document.getElementById('toggleAuthBtn').addEventListener('click', () =>
     setAuthMode(authMode === 'login' ? 'signup' : 'login')
   );
-
-  ['usernameInput', 'passwordInput', 'confirmInput'].forEach(id => {
-    document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
-  });
 
   document.getElementById('logoutBtn').addEventListener('click', handleLogout);
 

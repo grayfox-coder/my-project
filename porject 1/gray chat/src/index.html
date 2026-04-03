@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gray Chat</title>
+  <meta name="description" content="Gray Chat — secure real-time messaging by GreyFox.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" integrity="sha384-8I75qonLaiy0ZPPc1rL1nDqFaYfDcKR5toCCaU8WvLDAJwFsEIw0cKZjRLe2Bnkf" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+  <!-- ══ LOGIN SCREEN ══════════════════════════════════════════════════ -->
+  <div id="loginScreen" class="screen active">
+    <div class="login-wrap">
+      <div class="login-box">
+        <div class="login-logo">
+          <div class="icon">
+            <img src="assets/logo.png" alt="Gray Chat Logo">
+          </div>
+          <h1 id="authTitle">Welcome back</h1>
+          <p id="authSubtitle">Sign in to Gray Chat</p>
+        </div>
+
+        <form id="authForm">
+          <div class="field" id="usernameField" style="display:none">
+            <label>Display Username</label>
+            <input type="text" id="displayUsernameInput" placeholder="How others see you">
+          </div>
+          <div class="field">
+            <label>Email Address</label>
+            <input type="email" id="usernameInput" placeholder="Enter email" autocomplete="email">
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <input type="password" id="passwordInput" placeholder="Enter password" autocomplete="current-password">
+          </div>
+          <div class="field" id="confirmField" style="display:none">
+            <label>Confirm password</label>
+            <input type="password" id="confirmInput" placeholder="Confirm password">
+          </div>
+          <div class="field" style="display:flex; align-items:center; gap:8px; margin-bottom:20px;">
+            <input type="checkbox" id="rememberMe" style="width:auto; accent-color:var(--accent);">
+            <label for="rememberMe" style="margin-bottom:0; cursor:pointer; text-transform:none; font-size:13px;">Remember
+              my email</label>
+          </div>
+
+          <button type="submit" class="btn-primary" id="loginBtn">Sign in</button>
+          <div class="login-error" id="loginError"></div>
+        </form>
+        <div class="auth-footer">
+          <span id="toggleText">Don't have an account?</span>
+          <button id="toggleAuthBtn">Sign up</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ CHAT SCREEN ════════════════════════════════════════════════════ -->
+  <div id="chatScreen" class="screen">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <div class="chat-wrap">
+
+      <!-- SIDEBAR -->
+      <div class="sidebar open" id="sidebar">
+
+        <!-- Brand + Search -->
+        <div class="sidebar-top">
+          <div class="brand-row">
+            <div class="brand-logo" style="background:transparent; overflow:hidden; border-radius:50%;">
+              <img src="assets/logo.png" alt="Gray Chat" style="width:30px; height:30px; object-fit:cover; border-radius:50%;">
+            </div>
+            <span class="brand-name">Gray Chat</span>
+          </div>
+          <div class="search-box">
+            <div style="position:relative; flex:1;">
+              <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2.2">
+                <circle cx="11" cy="11" r="8" />
+                <path d="M21 21l-4.35-4.35" />
+              </svg>
+              <input type="text" id="searchInput" placeholder="Search users or groups..." aria-label="Search users or groups">
+            </div>
+            <button class="btn-icon" id="openGroupModalBtn" title="Create Group" aria-label="Create Group">+</button>
+          </div>
+        </div>
+
+        <!-- Current user -->
+        <div class="user-block">
+          <div class="avatar" id="userAvatar">?</div>
+          <div class="user-info">
+            <div class="username" id="currentUsername">Loading...</div>
+            <div class="status-wrap">
+              <div class="dot"></div>Online
+            </div>
+          </div>
+          <button class="settings-btn" id="logoutBtn" title="Logout">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="theme-selector">
+          <button class="theme-opt" id="theme-gray">Gray</button>
+          <button class="theme-opt" id="theme-dark">Dark</button>
+          <button class="theme-opt" id="theme-white">White</button>
+        </div>
+
+        <div class="section-label">Conversations</div>
+        <div class="conv-list" id="convList"></div>
+      </div>
+
+      <!-- MAIN -->
+      <div class="main">
+        <div class="chat-topbar">
+          <button class="btn-icon" id="hamBtn" style="display:none">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <button class="btn-icon" id="backBtn" style="display:none">←</button>
+          <div class="avatar-sm" id="chatAvatar">💬</div>
+          <div class="chat-info">
+            <div class="chat-name" id="chatName">Select a conversation</div>
+            <div class="chat-members" id="chatMembers">Choose a chat from the sidebar</div>
+          </div>
+        </div>
+
+        <div id="placeholderState" class="placeholder-state">
+          <div class="big-icon">💬</div>
+          <p>Select a conversation to start chatting</p>
+        </div>
+
+        <div id="msgsWrap" class="msgs-wrap" style="display:none"></div>
+
+        <div class="input-bar">
+          <div class="input-wrap">
+            <input type="text" id="msgInput" placeholder="Type a message…" disabled>
+          </div>
+          <button class="btn-send" id="sendBtn" disabled>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <line x1="22" y1="2" x2="11" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Create Group Modal -->
+  <div id="createGroupModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="groupNameInput">
+    <div class="modal">
+      <h3 id="modalTitle">Create Group Chat</h3>
+      <div class="field">
+        <label for="groupNameInput">Group Name</label>
+        <input type="text" id="groupNameInput" placeholder="Enter group name...">
+      </div>
+      <div class="modal-actions">
+        <button class="btn-ghost" id="cancelGroupBtn">Cancel</button>
+        <button class="btn-modal-create" id="confirmGroupBtn">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastContainer"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/script.js"></script>
+</body>
+
+</html>
