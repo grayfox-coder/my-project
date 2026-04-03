@@ -1,7 +1,7 @@
 // ─── Supabase Configuration ──────────────────────────────────────────────
-const SUPABASE_URL = 'https://zraymacgsjokuzsteapr.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpyYXltYWNnc2pva3V6c3RlYXByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NjYwNzcsImV4cCI6MjA5MDE0MjA3N30.JlPShGc2C5yXj9eBRn4LfKOa6ZRDOl547ioCiSv6xRk';
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// Configuration is now loaded from config.js (loaded before this script in index.html)
+// SUPABASE_URL and SUPABASE_ANON_KEY are defined in config.js
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ─── Utilities ───────────────────────────────────────────────────────────────
 
@@ -126,10 +126,6 @@ async function loginSuccess(user) {
   document.getElementById('sidebar').classList.add('open'); // Ensure sidebar is open on login
   loadConversations();
   setupGlobalListener();
-
-  supabaseClient.auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_OUT') handleLogout();
-  });
 }
 
 function setTheme(theme) {
@@ -152,6 +148,8 @@ setTheme(currentTheme);
 async function handleLogout() {
   await supabaseClient.auth.signOut();
   if (messageSubscription) messageSubscription.unsubscribe();
+  if (globalSubscription) globalSubscription.unsubscribe();
+  globalSubscription = null;
   currentUser = null;
   currentConv = null;
 
@@ -208,30 +206,52 @@ async function loadConversations() {
     return;
   }
 
-  for (const conv of mine) {
-    // For direct chats, we show the other user's name
-    let chatName = conv.name;
-    if (conv.is_direct) {
-      const { data: otherMember } = await supabaseClient
-        .from('members')
-        .select(`
-          profile:profiles (username)
-        `)
-        .eq('conversation_id', conv.id)
-        .neq('user_id', currentUser.id)
-        .single();
-      chatName = otherMember?.profile?.username || 'Private Chat';
-    }
+  // Batch fetch data to avoid N+1 queries
+  const convIds = mine.map(c => c.id);
+  const directConvIds = mine.filter(c => c.is_direct).map(c => c.id);
 
-    // Unread message count
+  // Fetch all members for direct conversations in one query
+  let membersMap = {};
+  if (directConvIds.length > 0) {
+    const { data: allMembers, error: membersError } = await supabaseClient
+      .from('conversation_members')
+      .select(`
+        conversation_id,
+        profile:profiles (username)
+      `)
+      .in('conversation_id', directConvIds)
+      .neq('user_id', currentUser.id);
+
+    if (!membersError && allMembers) {
+      allMembers.forEach(member => {
+        if (!membersMap[member.conversation_id]) {
+          membersMap[member.conversation_id] = member.profile?.username || 'Private Chat';
+        }
+      });
+    }
+  }
+
+  // Fetch all messages with counts in one query per conversation
+  // We'll fetch messages and count them in batches
+  let messageCountsMap = {};
+  for (const conv of mine) {
     const lastRead = localStorage.getItem(`chat_read_${conv.id}`) || conv.created_at;
     const { count } = await supabaseClient
       .from('messages')
       .select('*', { count: 'exact', head: true })
       .eq('conversation_id', conv.id)
       .gt('created_at', lastRead);
+    messageCountsMap[conv.id] = count || 0;
+  }
 
-    const unreadCount = count || 0;
+  for (const conv of mine) {
+    // For direct chats, get the other user's name from our batch
+    let chatName = conv.name;
+    if (conv.is_direct) {
+      chatName = membersMap[conv.id] || 'Private Chat';
+    }
+
+    const unreadCount = messageCountsMap[conv.id] || 0;
 
     const div = document.createElement('div');
     div.className = 'conv-item' + (currentConv?.id === conv.id ? ' active' : '');
@@ -402,10 +422,16 @@ async function joinGroup(groupId, groupName) {
 
 async function startDirectChat(otherId, otherUsername) {
   // 1. Check if direct chat already exists
-  const { data: existing } = await supabaseClient.rpc('get_direct_chat_id', {
+  const { data: existing, error: rpcError } = await supabaseClient.rpc('get_direct_chat_id', {
     user1: currentUser.id,
     user2: otherId
   });
+
+  if (rpcError) {
+    console.error('Error checking for existing direct chat:', rpcError);
+    showToast('Error checking for existing chat', 'error');
+    return;
+  }
 
   if (existing) {
     document.getElementById('searchInput').value = '';
@@ -468,7 +494,7 @@ async function loadMessages() {
   if (!currentConv) return;
   const { data: msgs, error } = await supabaseClient
     .from('messages')
-    .select('*')
+    .select('*, sender:user_id(email, username)')
     .eq('conversation_id', currentConv.id)
     .order('created_at', { ascending: true });
 
@@ -499,7 +525,15 @@ function renderMessages(msgs) {
 
     const av = document.createElement('div');
     av.className = 'msg-av';
-    av.textContent = initials(isOwn ? currentUser.email : 'Other');
+    // Derive sender identity from message object
+    let senderIdentity = 'Other';
+    if (isOwn) {
+      senderIdentity = currentUser.email;
+    } else if (msg.sender) {
+      // Use sender profile data included from the query
+      senderIdentity = msg.sender.email || msg.sender.username || 'Other';
+    }
+    av.textContent = initials(senderIdentity);
 
     const body = document.createElement('div');
     body.className = 'msg-body';
