@@ -1,0 +1,24 @@
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "my project",
+    "framework": "unknown",
+    "language": "javascript",
+    "packageManager": "npm"
+  },
+  "scan": {
+    "exclude": [
+      "node_modules",
+      "dist",
+      "build",
+      ".next",
+      ".vibecheck"
+    ]
+  },
+  "createdAt": "2026-04-03T13:23:34.335Z",
+  "github": {
+    "repo": "grayfox-coder/my-project",
+    "connected": true,
+    "connectedAt": "2026-04-03T13:23:46.517Z"
+  }
+}

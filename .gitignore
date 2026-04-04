@@ -1,0 +1,5 @@
+
+# VibeCheck
+.vibecheck/screenshots/
+.vibecheck/scan-results.json
+.vibecheck/context-engine-ledger.json

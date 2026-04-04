@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="CSS/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>💬</text></svg>">
 </head>
 
 <body>
@@ -25,29 +26,31 @@
           <p id="authSubtitle">Sign in to Gray Chat</p>
         </div>
 
-        <div class="field" id="usernameField" style="display:none">
-          <label>Display Username</label>
-          <input type="text" id="displayUsernameInput" placeholder="How others see you">
-        </div>
-        <div class="field">
-          <label>Email Address</label>
-          <input type="email" id="usernameInput" placeholder="Enter email" autocomplete="email">
-        </div>
-        <div class="field">
-          <label>Password</label>
-          <input type="password" id="passwordInput" placeholder="Enter password" autocomplete="current-password">
-        </div>
-        <div class="field" id="confirmField" style="display:none">
-          <label>Confirm password</label>
-          <input type="password" id="confirmInput" placeholder="Confirm password">
-        </div>
-        <div class="field" style="display:flex; align-items:center; gap:8px; margin-bottom:20px;">
-          <input type="checkbox" id="rememberMe" style="width:auto; accent-color:var(--accent);">
-          <label for="rememberMe" style="margin-bottom:0; cursor:pointer; text-transform:none; font-size:13px;">Remember
-            my email</label>
-        </div>
+        <form id="authForm">
+          <div class="field" id="usernameField" style="display:none">
+            <label>Display Username</label>
+            <input type="text" id="displayUsernameInput" placeholder="How others see you">
+          </div>
+          <div class="field">
+            <label>Email Address</label>
+            <input type="email" id="usernameInput" placeholder="Enter email" autocomplete="email">
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <input type="password" id="passwordInput" placeholder="Enter password" autocomplete="current-password">
+          </div>
+          <div class="field" id="confirmField" style="display:none">
+            <label>Confirm password</label>
+            <input type="password" id="confirmInput" placeholder="Confirm password">
+          </div>
+          <div class="field" style="display:flex; align-items:center; gap:8px; margin-bottom:20px;">
+            <input type="checkbox" id="rememberMe" style="width:auto; accent-color:var(--accent);">
+            <label for="rememberMe" style="margin-bottom:0; cursor:pointer; text-transform:none; font-size:13px;">Remember
+              my email</label>
+          </div>
 
-        <button class="btn-primary" id="loginBtn">Sign in</button>
+          <button type="submit" class="btn-primary" id="loginBtn">Sign in</button>
+        </form>
         <div class="login-error" id="loginError"></div>
         <div class="auth-footer">
           <span id="toggleText">Don't have an account?</span>
@@ -101,12 +104,6 @@
               <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
             </svg>
           </button>
-        </div>
-
-        <div class="theme-selector">
-          <button class="theme-opt" id="theme-gray">Gray</button>
-          <button class="theme-opt" id="theme-dark">Dark</button>
-          <button class="theme-opt" id="theme-white">White</button>
         </div>
 
         <div class="section-label">Conversations</div>

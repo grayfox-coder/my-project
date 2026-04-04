@@ -129,20 +129,10 @@ async function loginSuccess(user) {
 }
 
 function setTheme(theme) {
-  document.body.classList.remove('theme-dark', 'theme-white');
-  if (theme !== 'gray') document.body.classList.add(`theme-${theme}`);
   currentTheme = theme;
   localStorage.setItem('chat_theme', theme);
-
-  // Update UI
-  document.querySelectorAll('.theme-opt').forEach(opt => {
-    opt.classList.toggle('active', opt.id === `theme-${theme}`);
-  });
 }
 
-document.getElementById('theme-gray').addEventListener('click', () => setTheme('gray'));
-document.getElementById('theme-dark').addEventListener('click', () => setTheme('dark'));
-document.getElementById('theme-white').addEventListener('click', () => setTheme('white'));
 setTheme(currentTheme);
 
 async function handleLogout() {
